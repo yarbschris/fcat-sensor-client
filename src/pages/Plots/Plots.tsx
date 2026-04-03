@@ -30,7 +30,7 @@ export const Plots = () => {
     const fetchedTableData: DynamicTableData = [];
     lastMeasurements.plots.forEach((plot) => {
       const _node = lastMeasurements.nodes.find(
-        (_node) => _node.node.id === plot.id,
+        (_node) => _node.node.id === plot.nodeID,
       );
       const node = _node?.node;
       const sensors = lastMeasurements.sensors;
