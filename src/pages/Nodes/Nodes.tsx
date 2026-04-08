@@ -31,6 +31,7 @@ export const Nodes = () => {
   const [showCreatePlot, setShowCreatePlot] = useState(false);
   const [createPlotNodeId, setCreatePlotNodeId] = useState<string | null>(null);
   const [newPlot, setNewPlot] = useState({ id: '', latitude: '', longitude: '', description: '' });
+  const [deleteNodeId, setDeleteNodeId] = useState<string | null>(null);
   const { language } = useLanguage();
 
   const fetchData = async () => {
@@ -88,6 +89,13 @@ export const Nodes = () => {
     await fetchData();
   };
 
+  const handleDeleteNode = async (nodeId: string) => {
+    await axios.delete(`/api/nodes/deleteNode/${nodeId}`);
+    setDeleteNodeId(null);
+    setEditingNodeId(null);
+    await fetchData();
+  };
+
   const availablePlots = plots.filter((p) => p.nodeID === null);
 
   const columns: ColumnDef<NodeRow>[] = [
@@ -98,13 +106,22 @@ export const Nodes = () => {
         const nodeId = row.original.id;
         if (editingNodeId === nodeId) {
           return (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditingNodeId(null)}
-            >
-              {decodeCombined('[en]Cancel[es]Cancelar', language)}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingNodeId(null)}
+              >
+                {decodeCombined('[en]Cancel[es]Cancelar', language)}
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteNodeId(nodeId)}
+              >
+                {decodeCombined('[en]Delete[es]Eliminar', language)}
+              </Button>
+            </div>
           );
         }
         return (
@@ -198,6 +215,35 @@ export const Nodes = () => {
           <DataTable columns={columns} data={rows} />
         </div>
       </div>
+
+      <Dialog open={deleteNodeId !== null} onOpenChange={(open) => {
+        if (!open) setDeleteNodeId(null);
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {decodeCombined('[en]Delete Node[es]Eliminar Nodo', language)}
+            </DialogTitle>
+            <DialogDescription>
+              {decodeCombined(
+                '[en]Are you sure you want to delete this node? This action cannot be undone unless the node is heard from again.[es]¿Está seguro de que desea eliminar este nodo? Esta acción no se puede deshacer a menos que el nodo se vuelva a escuchar.',
+                language,
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteNodeId(null)}>
+              {decodeCombined('[en]Cancel[es]Cancelar', language)}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteNodeId && handleDeleteNode(deleteNodeId)}
+            >
+              {decodeCombined('[en]Delete[es]Eliminar', language)}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showCreatePlot} onOpenChange={(open) => {
         if (!open) {
