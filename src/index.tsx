@@ -6,6 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { Login } from './pages/auth/Login';
 import { Plots } from './pages/Plots/Plots';
+import { Nodes } from './pages/Nodes/Nodes';
 import {
   Language,
   LanguageContext,
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <Plots />,
+  },
+  {
+    path: '/nodes',
+    element: <Nodes />,
   },
   {
     path: '*',
