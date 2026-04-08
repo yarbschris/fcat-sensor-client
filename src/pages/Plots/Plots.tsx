@@ -32,12 +32,9 @@ export const Plots = () => {
       const _node = lastMeasurements.nodes.find(
         (_node) => _node.node.id === plot.nodeID,
       );
-      const node = _node?.node;
+      const node = _node?.node ?? null;
       const sensors = lastMeasurements.sensors;
-      const onlyLastMeasurements = _node?.lastMeasurements;
-      if (node === undefined || onlyLastMeasurements === undefined) {
-        return;
-      }
+      const onlyLastMeasurements = _node?.lastMeasurements ?? [];
       fetchedTableData.push({
         node,
         ...plot,
@@ -57,11 +54,10 @@ export const Plots = () => {
     if (selectedPlot === null) {
       return;
     }
+    const selected = tableData.find((plot) => plot.id === selectedPlot);
+    if (!selected) return;
     const newTableData = tableData.filter((plot) => plot.id !== selectedPlot);
-    setTableData([
-      tableData.find((plot) => plot.id === selectedPlot)!,
-      ...newTableData,
-    ]);
+    setTableData([selected, ...newTableData]);
   }, [selectedPlot, tableData]);
 
   useEffect(() => {

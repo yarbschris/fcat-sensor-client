@@ -19,7 +19,7 @@ export const columnFactory: ({
     language: Language;
 }) => ColumnDef<
     Plot & {
-        node: SensorNode;
+        node: SensorNode | null;
         sensors: Array<Sensor>;
         lastMeasurements: Array<Measurement>;
     }
@@ -30,7 +30,11 @@ export const columnFactory: ({
     },
     {
         header: decodeCombined('[en]Node[es]Nodo', language),
-        cell: (cell) => <SensorNodeCell plotId={cell.getValue() as string} />,
+        cell: (cell) => {
+            const nodeID = cell.getValue() as string | null;
+            if (!nodeID) return decodeCombined('[en]No Node Assigned[es]Ningún nodo asignado', language);
+            return <SensorNodeCell plotId={nodeID} />;
+        },
         accessorKey: 'nodeID',
     },
     {
@@ -39,11 +43,11 @@ export const columnFactory: ({
     },
     {
         header: decodeCombined('[en]Last Seen[es]Última vez vista', language),
-        cell: (cell) => (
-            <LastSeenCell
-                lastSeen={new Date(cell.row?.original?.lastMeasurements[0]?.createdAt)}
-            />
-        ),
+        cell: (cell) => {
+            const lastMeasurement = cell.row?.original?.lastMeasurements[0];
+            if (!lastMeasurement) return '—';
+            return <LastSeenCell lastSeen={new Date(lastMeasurement.createdAt)} />;
+        },
     },
     {
         header: decodeCombined('[en]Location[es]Ubicación', language),
@@ -79,9 +83,7 @@ export const columnFactory: ({
             language,
         ),
         cell: (cell) => {
-            console.log('Last Measurements Cell Row Original:', cell.row.original);
-            console.log('Last Measurements Cell Plot ID:', cell.row.original.id);
-
+            if (cell.row.original.lastMeasurements.length === 0) return '—';
             return (
                 <LastMeasurementsCell
                     lastMeasurements={cell.row.original.lastMeasurements}
@@ -116,7 +118,7 @@ export const DynamicPlotTable = ({
 
 export type DynamicTableData = Array<
     Plot & {
-        node: SensorNode;
+        node: SensorNode | null;
         sensors: Array<Sensor>;
         lastMeasurements: Array<Measurement>;
     }
