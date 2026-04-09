@@ -157,7 +157,7 @@ export const LastMeasurementsCell = ({
                                                             : selectedSensorName === 'Humidity'
                                                                 ? '%'
                                                                 : selectedSensorName === 'Light Coverage'
-                                                                    ? 'mV'
+                                                                    ? 'lux'
                                                                     : selectedSensorName === 'Battery Percentage'
                                                                         ? '%'
                                                                         : selectedSensorName === 'Soil Moisture'
@@ -168,7 +168,7 @@ export const LastMeasurementsCell = ({
                                                         selectedSensorName === 'Battery Percentage'
                                                             ? [0, 100]
                                                             : selectedSensorName === 'Light Coverage'
-                                                                ? [40000, 60000]
+                                                                ? [0, 2000]
                                                                 : [0, 'auto']
                                                     }
                                                     tickCount={6}
