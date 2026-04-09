@@ -7,13 +7,14 @@ import {
 } from '@/components/tables/DynamicPlotTable';
 import { Header } from '@/components/ui/header';
 import { LastMeasurementsObject, SensorNode, Plot, Sensor } from '@/lib/types';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useLanguage } from '@/LocalizationProvider';
 import { decodeCombined } from '@/lib/utils';
 
 export const Plots = () => {
   const [selectedPlot, setSelectedPlot] = useState<string | null>(null);
+  const selectedPlotRef = useRef(selectedPlot);
   const [measurements, setMeasurements] = useState<LastMeasurementsObject>({
     nodes: [],
     sensors: [],
@@ -43,31 +44,34 @@ export const Plots = () => {
       });
     });
 
+    // Keep selected plot at the top
+    const current = selectedPlotRef.current;
+    if (current) {
+      const selected = fetchedTableData.find((plot) => plot.id === current);
+      if (selected) {
+        const rest = fetchedTableData.filter((plot) => plot.id !== current);
+        setTableData([selected, ...rest]);
+        return;
+      }
+    }
     setTableData(fetchedTableData);
   };
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
   }, []);
-  useEffect(() => {
-    //pop selected plot from the table, put at the top
-    if (selectedPlot === null) {
-      return;
-    }
-    const selected = tableData.find((plot) => plot.id === selectedPlot);
-    if (!selected) return;
-    const newTableData = tableData.filter((plot) => plot.id !== selectedPlot);
-    setTableData([selected, ...newTableData]);
-  }, [selectedPlot, tableData]);
 
   useEffect(() => {
-    new Promise((resolve) => {
-      setTimeout(() => {
-        fetchData();
-        resolve(null);
-      }, 10000);
-    });
-  }, [measurements]);
+    selectedPlotRef.current = selectedPlot;
+    // Re-sort existing table data when selection changes
+    if (selectedPlot === null) return;
+    const selected = tableData.find((plot) => plot.id === selectedPlot);
+    if (!selected) return;
+    const rest = tableData.filter((plot) => plot.id !== selectedPlot);
+    setTableData([selected, ...rest]);
+  }, [selectedPlot]);
 
   // Variable that will control which map is showing
   const [mapToggle, setMapToggle] = useState(false);
