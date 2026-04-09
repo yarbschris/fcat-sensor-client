@@ -5,7 +5,7 @@ import { LucideBatteryWarning } from 'lucide-react';
 import { SensorNodeCell } from './cell/sensorNodeCell';
 import { Progress } from '../ui/progress';
 import { LastMeasurementsCell } from './cell/lastMeasurementsCell';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LastSeenCell } from './cell/lastSeenCell';
 import { Language } from '@/LocalizationProvider';
 import { decodeCombined } from '@/lib/utils';
@@ -106,15 +106,25 @@ export const DynamicPlotTable = ({
     selectedPlot: string | null;
     setSelectedPlot: (val: string | null) => void;
     language: Language;
-}) => (
-    <div>
-        <DataTable
-            columns={columnFactory({ setSelectedPlot, selectedPlot, language })}
-            data={data}
-            highlightRow={(row) => row.id === selectedPlot}
-        />
-    </div>
-);
+}) => {
+    const columns = useMemo(
+        () => columnFactory({ setSelectedPlot, selectedPlot, language }),
+        [setSelectedPlot, selectedPlot, language],
+    );
+    const highlightRow = useCallback(
+        (row: DynamicTableData[number]) => row.id === selectedPlot,
+        [selectedPlot],
+    );
+    return (
+        <div>
+            <DataTable
+                columns={columns}
+                data={data}
+                highlightRow={highlightRow}
+            />
+        </div>
+    );
+};
 
 export type DynamicTableData = Array<
     Plot & {

@@ -82,11 +82,6 @@ export const DynamicPlotMap = ({
         </p>
       )}
       <div
-        onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget)) {
-            setSelectedPlot(null);
-          }
-        }}
         style={{ height: 600 }}
       >
         {isLoaded ? (
