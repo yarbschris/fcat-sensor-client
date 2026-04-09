@@ -50,11 +50,16 @@ export const Plots = () => {
       const selected = fetchedTableData.find((plot) => plot.id === current);
       if (selected) {
         const rest = fetchedTableData.filter((plot) => plot.id !== current);
-        setTableData([selected, ...rest]);
-        return;
+        fetchedTableData.length = 0;
+        fetchedTableData.push(selected, ...rest);
       }
     }
-    setTableData(fetchedTableData);
+
+    // Only update state if data actually changed to avoid re-mounting cells
+    setTableData((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(fetchedTableData)) return prev;
+      return fetchedTableData;
+    });
   };
 
   useEffect(() => {
