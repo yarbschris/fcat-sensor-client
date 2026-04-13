@@ -81,11 +81,6 @@ export const DynamicPlotMap = ({
         </p>
       )}
       <div
-        onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget)) {
-            setSelectedPlot(null);
-          }
-        }}
         style={{ height: 600 }}
       >
         {/* Leaflet Map Implementation */}
@@ -117,7 +112,11 @@ export const DynamicPlotMap = ({
             >
               {/* Popup for selected plot */}
               <Popup>
-                <SensorNodeCell plotId={plot.id} />
+                {plot.nodeID ? (
+                  <SensorNodeCell plotId={plot.nodeID} />
+                ) : (
+                  <span>{decodeCombined('[en]No Node Assigned[es]Ningún nodo asignado', language)}</span>
+                )}
                 <div>
                   <strong>Lat:</strong> {plot.latitude.toFixed(5)}
                   <br />
@@ -140,7 +139,9 @@ export const DynamicPlotMap = ({
 
 export const MemoizedDynamicPlotMapLeaflet = memo(
   DynamicPlotMap,
-  (prev, next) => prev.selectedPlot === next.selectedPlot,
+  (prev, next) =>
+    prev.selectedPlot === next.selectedPlot &&
+    prev.plots === next.plots,
 );
 
 // Handles map clicks to clear selection when clicking outside markers

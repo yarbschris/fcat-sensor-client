@@ -82,11 +82,6 @@ export const DynamicPlotMap = ({
         </p>
       )}
       <div
-        onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget)) {
-            setSelectedPlot(null);
-          }
-        }}
         style={{ height: 600 }}
       >
         {isLoaded ? (
@@ -115,7 +110,11 @@ export const DynamicPlotMap = ({
                       }}
                       onCloseClick={() => setSelectedPlotOpen(false)}
                     >
-                      <SensorNodeCell plotId={plot.id} />
+                      {plot.nodeID ? (
+                        <SensorNodeCell plotId={plot.nodeID} />
+                      ) : (
+                        <span>{decodeCombined('[en]No Node Assigned[es]Ningún nodo asignado', language)}</span>
+                      )}
                     </InfoWindowF>
                   ) : null}
                 </Marker>
@@ -131,5 +130,7 @@ export const DynamicPlotMap = ({
 };
 export const MemoizedDynamicPlotMapGoogle = memo(
   DynamicPlotMap,
-  (prev, next) => prev.selectedPlot === next.selectedPlot,
+  (prev, next) =>
+    prev.selectedPlot === next.selectedPlot &&
+    prev.plots === next.plots,
 );

@@ -7,13 +7,14 @@ import {
 } from '@/components/tables/DynamicPlotTable';
 import { Header } from '@/components/ui/header';
 import { LastMeasurementsObject, SensorNode, Plot, Sensor } from '@/lib/types';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useLanguage } from '@/LocalizationProvider';
 import { decodeCombined } from '@/lib/utils';
 
 export const Plots = () => {
   const [selectedPlot, setSelectedPlot] = useState<string | null>(null);
+  const selectedPlotRef = useRef(selectedPlot);
   const [measurements, setMeasurements] = useState<LastMeasurementsObject>({
     nodes: [],
     sensors: [],
@@ -30,14 +31,11 @@ export const Plots = () => {
     const fetchedTableData: DynamicTableData = [];
     lastMeasurements.plots.forEach((plot) => {
       const _node = lastMeasurements.nodes.find(
-        (_node) => _node.node.id === plot.id,
+        (_node) => _node.node.id === plot.nodeID,
       );
-      const node = _node?.node;
+      const node = _node?.node ?? null;
       const sensors = lastMeasurements.sensors;
-      const onlyLastMeasurements = _node?.lastMeasurements;
-      if (node === undefined || onlyLastMeasurements === undefined) {
-        return;
-      }
+      const onlyLastMeasurements = _node?.lastMeasurements ?? [];
       fetchedTableData.push({
         node,
         ...plot,
@@ -46,32 +44,39 @@ export const Plots = () => {
       });
     });
 
-    setTableData(fetchedTableData);
+    // Keep selected plot at the top
+    const current = selectedPlotRef.current;
+    if (current) {
+      const selected = fetchedTableData.find((plot) => plot.id === current);
+      if (selected) {
+        const rest = fetchedTableData.filter((plot) => plot.id !== current);
+        fetchedTableData.length = 0;
+        fetchedTableData.push(selected, ...rest);
+      }
+    }
+
+    // Only update state if data actually changed to avoid re-mounting cells
+    setTableData((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(fetchedTableData)) return prev;
+      return fetchedTableData;
+    });
   };
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 10000);
+    return () => clearInterval(interval);
   }, []);
-  useEffect(() => {
-    //pop selected plot from the table, put at the top
-    if (selectedPlot === null) {
-      return;
-    }
-    const newTableData = tableData.filter((plot) => plot.id !== selectedPlot);
-    setTableData([
-      tableData.find((plot) => plot.id === selectedPlot)!,
-      ...newTableData,
-    ]);
-  }, [selectedPlot, tableData]);
 
   useEffect(() => {
-    new Promise((resolve) => {
-      setTimeout(() => {
-        fetchData();
-        resolve(null);
-      }, 10000);
-    });
-  }, [measurements]);
+    selectedPlotRef.current = selectedPlot;
+    // Re-sort existing table data when selection changes
+    if (selectedPlot === null) return;
+    const selected = tableData.find((plot) => plot.id === selectedPlot);
+    if (!selected) return;
+    const rest = tableData.filter((plot) => plot.id !== selectedPlot);
+    setTableData([selected, ...rest]);
+  }, [selectedPlot]);
 
   // Variable that will control which map is showing
   const [mapToggle, setMapToggle] = useState(false);
