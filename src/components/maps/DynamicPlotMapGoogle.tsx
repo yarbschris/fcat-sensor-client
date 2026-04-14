@@ -5,7 +5,6 @@ import {
   Marker,
   useJsApiLoader,
 } from '@react-google-maps/api';
-import api from '@/mapsapi.env.json';
 import { Plot } from '@/lib/types';
 import { SensorNodeCell } from '../tables/cell/sensorNodeCell';
 import {
@@ -29,7 +28,7 @@ export const DynamicPlotMap = ({
   const [initialLanguage] = useState<Language>(getLocalLanguage());
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: api.MapsAPIKey,
+    googleMapsApiKey: process.env.REACT_APP_MAPS_API_KEY || '',
     language: initialLanguage,
   });
   const [map, setMap] = useState(null);

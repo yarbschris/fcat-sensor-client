@@ -1,5 +1,10 @@
 
 import axios from 'axios';
+
+if (process.env.REACT_APP_API_URL) {
+    axios.defaults.baseURL = process.env.REACT_APP_API_URL;
+}
+
 export const setToken = (token: string) => localStorage.setItem(('token'), token);
 export const getToken = () => localStorage.getItem('token');
 export const clearToekn = () => localStorage.removeItem('token');
