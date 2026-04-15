@@ -20,7 +20,7 @@ import {
 
 export const Sensors = () => {
   const [rows, setRows] = useState<Sensor[]>([]);
-  const [editingSensorId, setEditingSensorId] = useState<number | null>(null);
+  const [editingSensor, setEditingSensor] = useState<Sensor | null>(null);
   const [deleteSensorId, setDeleteSensorId] = useState<number | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [newSensor, setNewSensor] = useState({
@@ -32,8 +32,10 @@ export const Sensors = () => {
     typicalRangeMin: '',
     typicalRangeMax: '',
   });
-  const [editSensor, setEditSensor] = useState<Partial<Sensor>>({ });
+  const [editSensor, setEditSensor] = useState<Partial<Sensor>>({});
   const { language } = useLanguage();
+
+  const idAlreadyExists = newSensor.id !== '' && rows.some((s) => String(s.id) === String(parseInt(newSensor.id)));
 
   const fetchData = async () => {
     const res = await axios.get('/api/sensors');
@@ -58,18 +60,21 @@ export const Sensors = () => {
     await fetchData();
   };
 
-  const handleUpdate = async (id: number) => {
-    await axios.patch(`/api/sensors/updatePlot/${id}`, {
+  const handleUpdate = async () => {
+    if (!editingSensor) return;
+    await axios.patch(`/api/sensors/updatePlot/${editingSensor.id}`, {
       sensor: editSensor,
     });
-    setEditingSensorId(null);
-    setEditSensor({ });
+    setEditingSensor(null);
+    setEditSensor({});
     await fetchData();
   };
 
   const handleDelete = async (id: number) => {
     await axios.delete(`/api/sensors/deletePlot/${id}`);
     setDeleteSensorId(null);
+    setEditingSensor(null);
+    setEditSensor({});
     await fetchData();
   };
 
@@ -77,29 +82,15 @@ export const Sensors = () => {
     {
       id: 'actions',
       header: '',
-      cell: ({ row }) => {
-        const id = row.original.id;
-        if (editingSensorId === id) {
-          return (
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => { setEditingSensorId(null); setEditSensor({ }); }}>
-                {decodeCombined('[en]Cancel[es]Cancelar', language)}
-              </Button>
-              <Button size="sm" onClick={() => handleUpdate(id)}>
-                {decodeCombined('[en]Save[es]Guardar', language)}
-              </Button>
-              <Button variant="destructive" size="sm" onClick={() => setDeleteSensorId(id)}>
-                {decodeCombined('[en]Delete[es]Eliminar', language)}
-              </Button>
-            </div>
-          );
-        }
-        return (
-          <Button variant="outline" size="sm" onClick={() => { setEditingSensorId(id); setEditSensor(row.original); }}>
-            {decodeCombined('[en]Edit[es]Editar', language)}
-          </Button>
-        );
-      },
+      cell: ({ row }) => (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => { setEditingSensor(row.original); setEditSensor(row.original); }}
+        >
+          {decodeCombined('[en]Edit[es]Editar', language)}
+        </Button>
+      ),
     },
     {
       header: decodeCombined('[en]ID[es]ID', language),
@@ -108,63 +99,19 @@ export const Sensors = () => {
     {
       header: decodeCombined('[en]Name[es]Nombre', language),
       accessorKey: 'name',
-      cell: ({ row, getValue }) => {
-        if (editingSensorId === row.original.id) {
-          return (
-            <Input
-              value={editSensor.name ?? ''}
-              onChange={(e) => setEditSensor({ ...editSensor, name: e.target.value })}
-            />
-          );
-        }
-        return getValue() as string;
-      },
     },
     {
       header: decodeCombined('[en]Description[es]Descripción', language),
       accessorKey: 'description',
-      cell: ({ row, getValue }) => {
-        if (editingSensorId === row.original.id) {
-          return (
-            <Input
-              value={editSensor.description ?? ''}
-              onChange={(e) => setEditSensor({ ...editSensor, description: e.target.value })}
-            />
-          );
-        }
-        return (getValue() as string) ?? '—';
-      },
+      cell: ({ getValue }) => (getValue() as string) ?? '—',
     },
     {
       header: decodeCombined('[en]Length[es]Longitud', language),
       accessorKey: 'length',
-      cell: ({ row, getValue }) => {
-        if (editingSensorId === row.original.id) {
-          return (
-            <Input
-              type="number"
-              value={editSensor.length ?? ''}
-              onChange={(e) => setEditSensor({ ...editSensor, length: parseInt(e.target.value) })}
-            />
-          );
-        }
-        return getValue() as number;
-      },
     },
     {
       header: decodeCombined('[en]Transform Equation[es]Ecuación de transformación', language),
       accessorKey: 'transformEq',
-      cell: ({ row, getValue }) => {
-        if (editingSensorId === row.original.id) {
-          return (
-            <Input
-              value={editSensor.transformEq ?? ''}
-              onChange={(e) => setEditSensor({ ...editSensor, transformEq: e.target.value })}
-            />
-          );
-        }
-        return getValue() as string;
-      },
     },
     {
       header: decodeCombined('[en]Typical Range[es]Rango típico', language),
@@ -194,6 +141,48 @@ export const Sensors = () => {
         </div>
       </div>
 
+      {/* Edit Dialog */}
+      <Dialog open={editingSensor !== null} onOpenChange={(open) => { if (!open) { setEditingSensor(null); setEditSensor({}); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{decodeCombined('[en]Edit Sensor[es]Editar sensor', language)}</DialogTitle>
+            <DialogDescription>
+              {decodeCombined('[en]Update the sensor details.[es]Actualice los detalles del sensor.', language)}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>{decodeCombined('[en]Name[es]Nombre', language)}</Label>
+              <Input value={editSensor.name ?? ''} onChange={(e) => setEditSensor({ ...editSensor, name: e.target.value })} />
+            </div>
+            <div className="grid gap-2">
+              <Label>{decodeCombined('[en]Description[es]Descripción', language)}</Label>
+              <Input value={editSensor.description ?? ''} onChange={(e) => setEditSensor({ ...editSensor, description: e.target.value })} />
+            </div>
+            <div className="grid gap-2">
+              <Label>{decodeCombined('[en]Length[es]Longitud', language)}</Label>
+              <Input type="number" value={editSensor.length ?? ''} onChange={(e) => setEditSensor({ ...editSensor, length: parseInt(e.target.value) })} />
+            </div>
+            <div className="grid gap-2">
+              <Label>{decodeCombined('[en]Transform Equation[es]Ecuación de transformación', language)}</Label>
+              <Input value={editSensor.transformEq ?? ''} onChange={(e) => setEditSensor({ ...editSensor, transformEq: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="destructive" onClick={() => editingSensor && setDeleteSensorId(editingSensor.id)}>
+              {decodeCombined('[en]Delete[es]Eliminar', language)}
+            </Button>
+            <Button variant="outline" onClick={() => { setEditingSensor(null); setEditSensor({}); }}>
+              {decodeCombined('[en]Cancel[es]Cancelar', language)}
+            </Button>
+            <Button onClick={handleUpdate}>
+              {decodeCombined('[en]Save[es]Guardar', language)}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
       <Dialog open={deleteSensorId !== null} onOpenChange={(open) => { if (!open) setDeleteSensorId(null); }}>
         <DialogContent>
           <DialogHeader>
@@ -213,6 +202,7 @@ export const Sensors = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={(open) => { if (!open) setShowCreate(false); }}>
         <DialogContent>
           <DialogHeader>
@@ -225,6 +215,11 @@ export const Sensors = () => {
             <div className="grid gap-2">
               <Label>{decodeCombined('[en]ID[es]ID', language)}</Label>
               <Input type="number" value={newSensor.id} onChange={(e) => setNewSensor({ ...newSensor, id: e.target.value })} />
+              {idAlreadyExists && (
+                <p className="text-sm text-red-600">
+                  {decodeCombined('[en]A sensor with this ID already exists.[es]Ya existe un sensor con este ID.', language)}
+                </p>
+              )}
             </div>
             <div className="grid gap-2">
               <Label>{decodeCombined('[en]Name[es]Nombre', language)}</Label>
@@ -257,7 +252,7 @@ export const Sensors = () => {
             </Button>
             <Button
               onClick={handleCreate}
-              disabled={!newSensor.id || !newSensor.name || !newSensor.length || !newSensor.transformEq}
+              disabled={!newSensor.id || !newSensor.name || !newSensor.length || !newSensor.transformEq || idAlreadyExists}
             >
               {decodeCombined('[en]Create[es]Crear', language)}
             </Button>
