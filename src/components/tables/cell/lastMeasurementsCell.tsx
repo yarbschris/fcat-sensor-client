@@ -49,6 +49,7 @@ export const LastMeasurementsCell = ({
     const [openSensorID, setOpenSensorID] = useState<string | null>(null);
     const [chartData, setChartData] = useState<ChartData[]>([]);
     const [selectedSensorName, setSelectedSensorName] = useState<string | null>(null);
+    const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
     const fetchMeasurements = useCallback(async (sensorName: string) => {
@@ -117,6 +118,7 @@ export const LastMeasurementsCell = ({
                                 if (open) {
                                     setOpenSensorID(measurement.sensorID);
                                     setSelectedSensorName(sensorName);
+                                    setSelectedSensor(sensor ?? null);
                                     fetchMeasurements(sensorName);
                                 } else {
                                     setOpenSensorID(null);
@@ -131,8 +133,8 @@ export const LastMeasurementsCell = ({
                                     <div className="flex flex-row gap-2">
                                         <div className="font-bold">
                                             {parseFloat(measurement.data).toFixed(2)}
+                                            {sensor?.description}
                                         </div>
-                                        <div>{sensor?.description}</div>
                                     </div>
                                 </div>
                             </DialogTrigger>
@@ -151,25 +153,11 @@ export const LastMeasurementsCell = ({
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis dataKey="timestamp" dy={15} />
                                                 <YAxis
-                                                    unit={
-                                                        selectedSensorName === 'Temperature'
-                                                            ? '°F'
-                                                            : selectedSensorName === 'Humidity'
-                                                                ? '%'
-                                                                : selectedSensorName === 'Light Coverage'
-                                                                    ? 'lux'
-                                                                    : selectedSensorName === 'Battery Percentage'
-                                                                        ? '%'
-                                                                        : selectedSensorName === 'Soil Moisture'
-                                                                            ? '%'
-                                                                            : ''
-                                                    }
+                                                    unit={selectedSensor?.description ?? ''}
                                                     domain={
-                                                        selectedSensorName === 'Battery Percentage'
-                                                            ? [0, 100]
-                                                            : selectedSensorName === 'Light Coverage'
-                                                                ? [0, 2000]
-                                                                : [0, 'auto']
+                                                        selectedSensor?.typicalRange
+                                                            ? [selectedSensor.typicalRange[0], selectedSensor.typicalRange[1]]
+                                                            : [0, 'auto']
                                                     }
                                                     tickCount={6}
                                                     tickFormatter={(value) => value.toLocaleString()}
