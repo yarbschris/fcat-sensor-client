@@ -24,17 +24,9 @@ import {
 
 interface ChartData {
     timestamp: string;
-    temperature?: number;
-    humidity?: number;
-    lightCoverage?: number;
-    batteryPercentage?: number;
-    soilMoisture?: number;
+    value: number;
 }
 
-const cleanSensorName = (name: string) => {
-    const match = name.match(/\[en\](.*?)\[/);
-    return match ? match[1] : name;
-};
 
 export const LastMeasurementsCell = ({
     lastMeasurements,
@@ -48,47 +40,25 @@ export const LastMeasurementsCell = ({
     const { language } = useLanguage();
     const [openSensorID, setOpenSensorID] = useState<string | null>(null);
     const [chartData, setChartData] = useState<ChartData[]>([]);
-    const [selectedSensorName, setSelectedSensorName] = useState<string | null>(null);
     const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
-    const fetchMeasurements = useCallback(async (sensorName: string) => {
+    const fetchMeasurements = useCallback(async (sensorId: string) => {
         try {
             setLoading(true);
             setChartData([]);
             const response = await axios.get(`/api/measurements/byPlot/${plotId}`);
-            const rawData = response.data;
+            const rawData: any[] = response.data;
 
-            const sensorMap: { [key: string]: keyof ChartData } = {
-                '0': 'soilMoisture',
-                '1': 'temperature',
-                '2': 'humidity',
-                '3': 'lightCoverage',
-                '4': 'batteryPercentage',
-            };
+            const points: ChartData[] = rawData
+                .filter((item) => item.sensorID === sensorId)
+                .map((item) => ({
+                    timestamp: new Date(item.time).toLocaleString(),
+                    value: parseFloat(item.data),
+                }))
+                .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-            const grouped: { [key: string]: Partial<ChartData> } = {};
-            rawData.forEach((item: any) => {
-                const time = new Date(item.time).toLocaleString();
-                const sensorIds = item.sensorID.split(',');
-                const values = item.data.split(',');
-
-                if (!grouped[time]) grouped[time] = { timestamp: time };
-
-                sensorIds.forEach((id: string, index: number) => {
-                    const field = sensorMap[id];
-                    if (field && values[index] !== undefined) {
-                        const value = parseFloat(values[index]);
-                        (grouped[time] as any)[field] = value;
-                    }
-                });
-            });
-
-            const formatted = Object.values(grouped).sort(
-                (a, b) => new Date(a.timestamp!).getTime() - new Date(b.timestamp!).getTime()
-            ) as ChartData[];
-
-            setChartData(formatted);
+            setChartData(points);
         } catch (error) {
             console.error('Error fetching measurements:', error);
         } finally {
@@ -100,7 +70,6 @@ export const LastMeasurementsCell = ({
         <div className="flex flex-row flex-wrap">
             {lastMeasurements.map((measurement) => {
                 const sensor = sensors.find((s) => s.id.toString() === measurement.sensorID);
-                const sensorName = cleanSensorName(sensor?.name || '');
                 const valuePercentage = sensor
                     ? ((parseFloat(measurement.data) - sensor.typicalRange[0]) /
                         (sensor.typicalRange[1] - sensor.typicalRange[0])) *
@@ -117,9 +86,8 @@ export const LastMeasurementsCell = ({
                             onOpenChange={(open) => {
                                 if (open) {
                                     setOpenSensorID(measurement.sensorID);
-                                    setSelectedSensorName(sensorName);
                                     setSelectedSensor(sensor ?? null);
-                                    fetchMeasurements(sensorName);
+                                    fetchMeasurements(measurement.sensorID);
                                 } else {
                                     setOpenSensorID(null);
                                 }
@@ -132,8 +100,7 @@ export const LastMeasurementsCell = ({
                                     </div>
                                     <div className="flex flex-row gap-2">
                                         <div className="font-bold">
-                                            {parseFloat(measurement.data).toFixed(2)}
-                                            {sensor?.description}
+                                            {isNaN(parseFloat(measurement.data)) ? '—' : parseFloat(measurement.data).toFixed(2)} {decodeCombined(sensor?.description ?? '', language)}
                                         </div>
                                     </div>
                                 </div>
@@ -163,23 +130,14 @@ export const LastMeasurementsCell = ({
                                                     tickFormatter={(value) => value.toLocaleString()}
                                                     width={80}
                                                 />
-                                                <Tooltip />
+                                                <Tooltip
+                                                    formatter={(value: number) => [
+                                                        `${value.toFixed(2)} ${decodeCombined(selectedSensor?.description ?? '', language)}`,
+                                                        decodeCombined(selectedSensor?.name ?? '', language),
+                                                    ]}
+                                                />
                                                 <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: 20 }} />
-                                                {selectedSensorName === 'Soil Moisture' && (
-                                                    <Line type="monotone" dataKey="soilMoisture" stroke="#8884d8" />
-                                                )}
-                                                {selectedSensorName === 'Temperature' && (
-                                                    <Line type="monotone" dataKey="temperature" stroke="#ff4d4f" />
-                                                )}
-                                                {selectedSensorName === 'Humidity' && (
-                                                    <Line type="monotone" dataKey="humidity" stroke="#82ca9d" />
-                                                )}
-                                                {selectedSensorName === 'Light Coverage' && (
-                                                    <Line type="monotone" dataKey="lightCoverage" stroke="#ffc658" />
-                                                )}
-                                                {selectedSensorName === 'Battery Percentage' && (
-                                                    <Line type="monotone" dataKey="batteryPercentage" stroke="#ff7300" />
-                                                )}
+                                                <Line type="monotone" dataKey="value" name={decodeCombined(selectedSensor?.name ?? '', language)} stroke="#8884d8" />
                                             </LineChart>
                                         </ResponsiveContainer>
                                     </div>
