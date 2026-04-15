@@ -8,6 +8,7 @@ import { Login } from './pages/auth/Login';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Plots } from './pages/Plots/Plots';
 import { Nodes } from './pages/Nodes/Nodes';
+import { Sensors } from './pages/Sensors/Sensors';
 import { restoreAuth } from './lib/auth';
 import {
     Language,
@@ -31,6 +32,10 @@ const router = createBrowserRouter([
     {
         path: '/nodes',
         element: <ProtectedRoute><Nodes /></ProtectedRoute>,
+    },
+    {
+        path: '/sensors',
+        element: <ProtectedRoute><Sensors /></ProtectedRoute>,
     },
     {
         path: '*',
