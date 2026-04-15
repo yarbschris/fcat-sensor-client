@@ -35,6 +35,7 @@
     "react-router-dom": "^6.22.1",
     "react-scripts": "5.0.1",
     "recharts": "^2.15.1",
+    "serve": "^14.2.6",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^4.9.5",
@@ -44,6 +45,7 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
+    "heroku-postbuild": "npm run build",
     "test": "craco test",
     "eject": "craco eject",
     "dev": "concurrently \"npm start\" \"npm run server\"",
