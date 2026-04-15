@@ -141,7 +141,7 @@ export const LastMeasurementsCell = ({
                             <DialogContent className="w-full max-w-[1400px] h-[800px]">
                                 <DialogHeader>
                                     <DialogTitle>
-                                        Measurement Data for Sensor {measurement.sensorID}
+                                        {decodeCombined('[en]Measurement Data for Sensor[es]Datos de medición para el sensor', language)} {measurement.sensorID}
                                     </DialogTitle>
                                 </DialogHeader>
                                 {loading ? (
