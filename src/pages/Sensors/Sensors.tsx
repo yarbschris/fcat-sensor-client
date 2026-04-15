@@ -167,6 +167,14 @@ export const Sensors = () => {
               <Label>{decodeCombined('[en]Transform Equation[es]Ecuación de transformación', language)}</Label>
               <Input value={editSensor.transformEq ?? ''} onChange={(e) => setEditSensor({ ...editSensor, transformEq: e.target.value })} />
             </div>
+            <div className="grid gap-2">
+              <Label>{decodeCombined('[en]Typical Range Min[es]Rango mínimo típico', language)}</Label>
+              <Input type="number" value={editSensor.typicalRange?.[0] ?? ''} onChange={(e) => setEditSensor({ ...editSensor, typicalRange: [parseFloat(e.target.value), editSensor.typicalRange?.[1] ?? 0] })} />
+            </div>
+            <div className="grid gap-2">
+              <Label>{decodeCombined('[en]Typical Range Max[es]Rango máximo típico', language)}</Label>
+              <Input type="number" value={editSensor.typicalRange?.[1] ?? ''} onChange={(e) => setEditSensor({ ...editSensor, typicalRange: [editSensor.typicalRange?.[0] ?? 0, parseFloat(e.target.value)] })} />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="destructive" onClick={() => editingSensor && setDeleteSensorId(editingSensor.id)}>
