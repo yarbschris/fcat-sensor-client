@@ -1,4 +1,4 @@
-import { SetStateAction, memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import {
   GoogleMap,
   InfoWindowF,
@@ -15,6 +15,10 @@ import {
 import { decodeCombined } from '@/lib/utils';
 //add maps api key to src/mapsapi.env.json file. in production, gotta protect this key with web URL!
 
+// Track what language the Google Maps API was loaded with — it's a global singleton
+// and cannot be reloaded with a different language without a full page refresh.
+let googleMapsLoadedLanguage: Language | null = null;
+
 export const DynamicPlotMap = ({
   plots,
   selectedPlot,
@@ -24,26 +28,30 @@ export const DynamicPlotMap = ({
   selectedPlot: string | null;
   setSelectedPlot: (val: string | null) => void;
 }) => {
-  const [data, setData] = useState([]);
   const [initialLanguage] = useState<Language>(getLocalLanguage());
+  const { language } = useLanguage();
+
+  // If the API was already loaded with a different language, we can't reinitialize it.
+  const languageMismatch = googleMapsLoadedLanguage !== null && googleMapsLoadedLanguage !== initialLanguage;
+
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.REACT_APP_MAPS_API_KEY || '',
-    language: initialLanguage,
+    // Always pass the originally-loaded language to avoid the singleton conflict.
+    language: googleMapsLoadedLanguage ?? initialLanguage,
   });
+
+  useEffect(() => {
+    if (isLoaded && googleMapsLoadedLanguage === null) {
+      googleMapsLoadedLanguage = initialLanguage;
+    }
+  }, [isLoaded]);
+
   const [map, setMap] = useState(null);
   const [selectedPlotOpen, setSelectedPlotOpen] = useState(false);
   useEffect(() => {
     setSelectedPlotOpen(selectedPlot !== null);
   }, [selectedPlot]);
-
-  const [isLanguageChanged, setIsLanguageChanged] = useState(false);
-  const { language } = useLanguage();
-  useEffect(() => {
-    if (language !== getLocalLanguage()) {
-      setIsLanguageChanged(true);
-    }
-  }, [language]);
 
   const getCenter = () => {
     const lat = plots.reduce((acc, curr) => acc + curr.latitude, 0);
@@ -72,7 +80,7 @@ export const DynamicPlotMap = ({
   }, []);
   return (
     <>
-      {isLanguageChanged && (
+      {languageMismatch && (
         <p>
           {decodeCombined(
             '[en]Language changed, please reload the page to reload map.[es]Idioma cambiado, por favor recargue la página para recargar el mapa.',
@@ -83,7 +91,7 @@ export const DynamicPlotMap = ({
       <div
         style={{ height: 600 }}
       >
-        {isLoaded ? (
+        {isLoaded && !languageMismatch ? (
           <GoogleMap
             mapContainerStyle={{ width: '100%', height: '100%' }}
             center={getCenter()}
