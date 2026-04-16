@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '@/LocalizationProvider';
 import { Progress } from '@/components/ui/progress';
 import { Measurement, Sensor } from '@/lib/types';
@@ -40,31 +40,40 @@ export const LastMeasurementsCell = ({
     const { language } = useLanguage();
     const [openSensorID, setOpenSensorID] = useState<string | null>(null);
     const [chartData, setChartData] = useState<ChartData[]>([]);
+    const [startDate, setStartDate] = useState<string>(() => {
+        const d = new Date(); d.setDate(d.getDate() - 30);
+        return d.toISOString().slice(0, 10);
+    });
+    const [endDate, setEndDate] = useState<string>(
+        () => new Date().toISOString().slice(0, 10)
+    );
     const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
-    const fetchMeasurements = useCallback(async (sensorId: string) => {
-        try {
-            setLoading(true);
-            setChartData([]);
-            const response = await axios.get(`/api/measurements/byPlot/${plotId}`);
-            const rawData: any[] = response.data;
-
-            const points: ChartData[] = rawData
-                .filter((item) => item.sensorID === sensorId)
-                .map((item) => ({
-                    timestamp: new Date(item.time).toLocaleString(),
-                    value: parseFloat(item.data),
-                }))
-                .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-
-            setChartData(points);
-        } catch (error) {
-            console.error('Error fetching measurements:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, [plotId]);
+    useEffect(() => {
+        if (!openSensorID) return;
+        let cancelled = false;
+        setLoading(true);
+        axios.get(`/api/measurements/byPlot/${plotId}`, {
+            params: { start: startDate, end: endDate },
+        })
+            .then((res) => {
+                if (cancelled) return;
+                const points: ChartData[] = res.data
+                    .filter((i: any) => i.sensorID === openSensorID)
+                    .map((i: any) => ({
+                        timestamp: new Date(i.time).toLocaleString(),
+                        value: parseFloat(i.data),
+                    }))
+                    .sort((a: ChartData, b: ChartData) =>
+                        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+                    );
+                setChartData(points);
+            })
+            .catch((err) => console.error('Error fetching measurements:', err))
+            .finally(() => { if (!cancelled) setLoading(false); });
+        return () => { cancelled = true; };
+    }, [openSensorID, startDate, endDate, plotId]);
 
     return (
         <div className="flex flex-row flex-wrap">
@@ -87,7 +96,6 @@ export const LastMeasurementsCell = ({
                                 if (open) {
                                     setOpenSensorID(measurement.sensorID);
                                     setSelectedSensor(sensor ?? null);
-                                    fetchMeasurements(measurement.sensorID);
                                 } else {
                                     setOpenSensorID(null);
                                 }
@@ -105,12 +113,23 @@ export const LastMeasurementsCell = ({
                                     </div>
                                 </div>
                             </DialogTrigger>
-                            <DialogContent className="w-full max-w-[1400px] h-[800px]">
-                                <DialogHeader>
+                            <DialogContent className="w-full max-w-[1400px] h-[800px] flex flex-col gap-2">
+                                <DialogHeader className="pb-0">
                                     <DialogTitle>
                                         {decodeCombined('[en]Measurement Data for Sensor[es]Datos de medición para el sensor', language)} {measurement.sensorID}
                                     </DialogTitle>
                                 </DialogHeader>
+                                <div className="flex gap-2 items-center px-4 py-2">
+                                    <span>{decodeCombined('[en]Range:[es]Rango:', language)}</span>
+                                    <input type="date" value={startDate} max={endDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="border rounded px-2 py-1" />
+                                    <span>-</span>
+                                    <input type="date" value={endDate} min={startDate}
+                                        max={new Date().toISOString().slice(0, 10)}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="border rounded px-2 py-1" />
+                                </div>
                                 {loading ? (
                                     <div className="text-center">Loading...</div>
                                 ) : (
