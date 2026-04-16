@@ -4,6 +4,8 @@ import { Progress } from '@/components/ui/progress';
 import { Measurement, Sensor } from '@/lib/types';
 import { decodeCombined } from '@/lib/utils';
 import axios from 'axios';
+import { useTimezone } from '@/TimezoneProvider';
+import { fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import {
     Dialog,
     DialogContent,
@@ -38,14 +40,15 @@ export const LastMeasurementsCell = ({
     plotId: string;
 }) => {
     const { language } = useLanguage();
+    const { timezone } = useTimezone();
     const [openSensorID, setOpenSensorID] = useState<string | null>(null);
     const [chartData, setChartData] = useState<ChartData[]>([]);
     const [startDate, setStartDate] = useState<string>(() => {
         const d = new Date(); d.setDate(d.getDate() - 30);
-        return d.toISOString().slice(0, 10);
+        return formatInTimeZone(d, timezone, 'yyyy-MM-dd');
     });
     const [endDate, setEndDate] = useState<string>(
-        () => new Date().toISOString().slice(0, 10)
+        () => formatInTimeZone(new Date(), timezone, 'yyyy-MM-dd')
     );
     const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
@@ -54,26 +57,28 @@ export const LastMeasurementsCell = ({
         if (!openSensorID) return;
         let cancelled = false;
         setLoading(true);
+        const startIso = fromZonedTime(`${startDate}T00:00:00`, timezone).toISOString();
+        const endIso = fromZonedTime(`${endDate}T23:59:59`, timezone).toISOString();
         axios.get(`/api/measurements/byPlot/${plotId}`, {
-            params: { start: startDate, end: endDate },
+            params: { start: startIso, end: endIso },
         })
             .then((res) => {
                 if (cancelled) return;
                 const points: ChartData[] = res.data
                     .filter((i: any) => i.sensorID === openSensorID)
                     .map((i: any) => ({
-                        timestamp: new Date(i.time).toLocaleString(),
+                        timestamp: formatInTimeZone(new Date(i.time), timezone, 'yyyy-MM-dd HH:mm'),
                         value: parseFloat(i.data),
                     }))
                     .sort((a: ChartData, b: ChartData) =>
-                        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+                        a.timestamp.localeCompare(b.timestamp)
                     );
                 setChartData(points);
             })
             .catch((err) => console.error('Error fetching measurements:', err))
             .finally(() => { if (!cancelled) setLoading(false); });
         return () => { cancelled = true; };
-    }, [openSensorID, startDate, endDate, plotId]);
+    }, [openSensorID, startDate, endDate, plotId, timezone]);
 
     return (
         <div className="flex flex-row flex-wrap">
