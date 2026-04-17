@@ -28,7 +28,7 @@ const router = createBrowserRouter([
     },
     {
         path: '/',
-        element: <ProtectedRoute><Plots /></ProtectedRoute>,
+        element: <Plots />,
     },
     {
         path: '/nodes',
