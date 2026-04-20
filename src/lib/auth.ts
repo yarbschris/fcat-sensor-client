@@ -3,7 +3,6 @@ import axios from 'axios';
 
 if (process.env.REACT_APP_API_URL) {
     axios.defaults.baseURL = process.env.REACT_APP_API_URL;
-    axios.defaults.headers.common['ngrok-skip-browser-warning'] = 'true';
 }
 
 export const setToken = (token: string) => localStorage.setItem(('token'), token);
