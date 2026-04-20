@@ -118,13 +118,13 @@ export const LastMeasurementsCell = ({
                                     </div>
                                 </div>
                             </DialogTrigger>
-                            <DialogContent className="w-full max-w-[1400px] h-[800px] flex flex-col gap-2">
+                            <DialogContent className="w-full max-w-[95vw] md:max-w-[1400px] h-[90vh] md:h-[800px] flex flex-col gap-2">
                                 <DialogHeader className="pb-0">
                                     <DialogTitle>
                                         {decodeCombined('[en]Measurement Data for Sensor[es]Datos de medición para el sensor', language)} {measurement.sensorID}
                                     </DialogTitle>
                                 </DialogHeader>
-                                <div className="flex gap-2 items-center px-4 py-2">
+                                <div className="flex flex-col md:flex-row gap-2 items-start md:items-center px-2 md:px-4 py-2">
                                     <span>{decodeCombined('[en]Range:[es]Rango:', language)}</span>
                                     <input type="date" value={startDate} max={endDate}
                                         onChange={(e) => setStartDate(e.target.value)}
