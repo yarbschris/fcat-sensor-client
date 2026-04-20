@@ -88,9 +88,7 @@ export const DynamicPlotMap = ({
           )}
         </p>
       )}
-      <div
-        style={{ height: 600 }}
-      >
+      <div className="h-[300px] md:h-[600px]">
         {isLoaded && !languageMismatch ? (
           <GoogleMap
             mapContainerStyle={{ width: '100%', height: '100%' }}

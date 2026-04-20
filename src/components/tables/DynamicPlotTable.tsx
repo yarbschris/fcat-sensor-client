@@ -40,6 +40,7 @@ export const columnFactory: ({
     {
         header: decodeCombined('[en]Description[es]Descripción', language),
         accessorKey: 'description',
+        meta: { hideOnMobile: true },
     },
     {
         header: decodeCombined('[en]Last Seen[es]Última vez vista', language),
@@ -52,6 +53,7 @@ export const columnFactory: ({
     {
         header: decodeCombined('[en]Location[es]Ubicación', language),
         accessorKey: 'location',
+        meta: { hideOnMobile: true },
         cell: (cell) => {
             const location = {
                 latitude: cell.row.original.latitude,

@@ -14,6 +14,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
+declare module '@tanstack/react-table' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends unknown, TValue> {
+    hideOnMobile?: boolean;
+  }
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   highlightRow?: (row: TData) => boolean;
@@ -38,7 +45,7 @@ export function DataTable<TData, TValue>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
+                <TableHead key={header.id} className={header.column.columnDef.meta?.hideOnMobile ? 'hidden md:table-cell' : ''}>
                   {header.isPlaceholder
                     ? null
                     : flexRender(
@@ -63,7 +70,7 @@ export function DataTable<TData, TValue>({
                 }
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell key={cell.id} className={cell.column.columnDef.meta?.hideOnMobile ? 'hidden md:table-cell' : ''}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

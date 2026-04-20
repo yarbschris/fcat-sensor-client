@@ -104,6 +104,7 @@ export const Sensors = () => {
       header: decodeCombined('[en]Description[es]Descripción', language),
       accessorKey: 'description',
       cell: ({ getValue }) => (getValue() as string) ?? '—',
+      meta: { hideOnMobile: true },
     },
     {
       header: decodeCombined('[en]Length[es]Longitud', language),
@@ -112,9 +113,11 @@ export const Sensors = () => {
     {
       header: decodeCombined('[en]Transform Equation[es]Ecuación de transformación', language),
       accessorKey: 'transformEq',
+      meta: { hideOnMobile: true },
     },
     {
       header: decodeCombined('[en]Typical Range[es]Rango típico', language),
+      meta: { hideOnMobile: true },
       accessorKey: 'typicalRange',
       cell: ({ getValue }) => {
         const val = getValue() as [number, number] | null;
@@ -128,9 +131,9 @@ export const Sensors = () => {
     <>
       <Header />
       <div className="flex justify-center">
-        <div className="w-5/6 bg-white drop-shadow-lg p-10 pt-0 mt-0 m-10">
-          <div className="flex justify-between items-center pt-8 pb-4">
-            <h1 className="font-bold tracking-tighter text-4xl">
+        <div className="w-full md:w-5/6 bg-white drop-shadow-lg p-3 md:p-10 pt-0 mt-0 m-2 md:m-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 pt-8 pb-4">
+            <h1 className="font-bold tracking-tighter text-2xl md:text-4xl">
               {decodeCombined('[en]Sensors[es]Sensores', language)}
             </h1>
             <Button onClick={() => setShowCreate(true)}>

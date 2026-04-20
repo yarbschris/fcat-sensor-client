@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { Login } from './pages/auth/Login';
@@ -9,12 +8,14 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Plots } from './pages/Plots/Plots';
 import { Nodes } from './pages/Nodes/Nodes';
 import { Sensors } from './pages/Sensors/Sensors';
+import { Settings } from './pages/Settings/Settings';
 import { restoreAuth } from './lib/auth';
 import {
-    Language,
-    LanguageContext,
     LocalizationProvider,
 } from './LocalizationProvider';
+import {
+    TimezoneProvider
+} from './TimezoneProvider';
 
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement,
@@ -27,7 +28,7 @@ const router = createBrowserRouter([
     },
     {
         path: '/',
-        element: <ProtectedRoute><Plots /></ProtectedRoute>,
+        element: <Plots />,
     },
     {
         path: '/nodes',
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
     {
         path: '/sensors',
         element: <ProtectedRoute><Sensors /></ProtectedRoute>,
+    },
+    {
+        path: '/settings',
+        element: <ProtectedRoute><Settings /></ProtectedRoute>
     },
     {
         path: '*',
@@ -48,7 +53,9 @@ restoreAuth();
 root.render(
     <React.StrictMode>
         <LocalizationProvider>
-            <RouterProvider router={router} />
+            <TimezoneProvider>
+                <RouterProvider router={router} />
+            </TimezoneProvider>
         </LocalizationProvider>
     </React.StrictMode>,
 );

@@ -80,9 +80,7 @@ export const DynamicPlotMap = ({
           )}
         </p>
       )}
-      <div
-        style={{ height: 600 }}
-      >
+      <div className="h-[300px] md:h-[600px]">
         {/* Leaflet Map Implementation */}
         <MapContainer
           center={getCenter()}
