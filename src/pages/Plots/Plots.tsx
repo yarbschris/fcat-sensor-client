@@ -121,7 +121,7 @@ export const Plots = () => {
     <>
       <Header />
       <div className="flex justify-center ">
-        <div className="w-full md:w-5/6 bg-white drop-shadow-lg p-3 md:p-10 pt-0 mt-0 m-2 md:m-10">
+        <div className="w-full md:w-11/12 bg-white drop-shadow-lg p-3 md:p-10 pt-0 mt-0 m-2 md:m-10">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <h1 className="font-bold tracking-tighter text-2xl md:text-4xl pt-8">
               {decodeCombined('[en]Plots[es]Parcelas', language)}
